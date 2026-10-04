@@ -1,0 +1,163 @@
+; PJSIP configuration for the BBS dial-in host. Copy to
+; /usr/local/etc/asterisk/pjsip.conf (mode 0640, owner asterisk), then replace
+; pbx.example.lan with your PBX and PASSWORD-HERE with each extension's secret.
+;
+; This Asterisk is a SIP *client*, not a PBX: it registers four extensions to
+; the PBX (FreePBX 17 here) and answers each incoming call with a software
+; modem. There is no trunk, no users, no PBX feature set.
+;
+; Each line is its own extension with a concurrency of one. Because all four
+; register to the same server, inbound calls cannot be told apart by source
+; address -- "line=yes" plus "endpoint=" on each registration tags the Contact
+; URI so a call arriving at that contact is matched to the right endpoint.
+;
+; Codec policy is not negotiable: ulaw only. A single compressed codec anywhere
+; on the path destroys the modem signal. direct_media must stay "no" because
+; Asterisk itself is the media endpoint here -- it terminates the modem call.
+; (Direct Media must be off on the PBX side too, see INSTALL.md.)
+
+[transport-udp]
+type = transport
+protocol = udp
+; The host has exactly one non-loopback interface, so binding to any address is
+; LAN-only in practice, and it survives an address change better than pinning.
+bind = 0.0.0.0:5060
+
+;=============================================================================
+; Templates
+;=============================================================================
+
+[endpoint-tpl](!)
+type = endpoint
+transport = transport-udp
+disallow = all
+allow = ulaw
+direct_media = no
+rtp_symmetric = yes
+force_rport = yes
+rewrite_contact = yes
+; Prioritise the RTP over other LAN traffic: for callers without V.42 error
+; correction, a late packet is corrupt characters with no retransmission.
+tos_audio = ef
+cos_audio = 5
+allow_transfer = no
+
+[reg-tpl](!)
+type = registration
+transport = transport-udp
+server_uri = sip:pbx.example.lan:5060
+retry_interval = 60
+forbidden_retry_interval = 600
+expiration = 3600
+line = yes
+
+[aor-tpl](!)
+type = aor
+; An AOR is what makes qualify possible, and qualify is how we notice that
+; the PBX has gone away instead of discovering it when a caller reports dead air.
+; The contact is where an outbound INVITE would go; this Asterisk does not place
+; calls in normal operation.
+;
+; NOTE: adding a new object type to this file needs a full Asterisk restart.
+; "pjsip reload" re-reads settings for objects that already exist but does not
+; instantiate ones that did not -- they simply never appear, with nothing in the
+; log to say so.
+contact = sip:pbx.example.lan:5060
+qualify_frequency = 60
+qualify_timeout = 3.0
+
+;=============================================================================
+; Line 401 -- ANSI1, V.22bis 2400
+;=============================================================================
+
+[401](endpoint-tpl)
+context = line-ansi
+from_user = 401
+outbound_auth = 401-auth
+aors = 401-aor
+
+[401-aor](aor-tpl)
+
+[401-auth]
+type = auth
+auth_type = userpass
+username = 401
+password = PASSWORD-HERE
+
+[401-reg](reg-tpl)
+client_uri = sip:401@pbx.example.lan
+contact_user = 401
+outbound_auth = 401-auth
+endpoint = 401
+
+;=============================================================================
+; Line 402 -- ANSI2, V.22bis 2400
+;=============================================================================
+
+[402](endpoint-tpl)
+context = line-ansi
+from_user = 402
+outbound_auth = 402-auth
+aors = 402-aor
+
+[402-aor](aor-tpl)
+
+[402-auth]
+type = auth
+auth_type = userpass
+username = 402
+password = PASSWORD-HERE
+
+[402-reg](reg-tpl)
+client_uri = sip:402@pbx.example.lan
+contact_user = 402
+outbound_auth = 402-auth
+endpoint = 402
+
+;=============================================================================
+; Line 403 -- ANSI3, V.22bis 2400
+;=============================================================================
+
+[403](endpoint-tpl)
+context = line-ansi
+from_user = 403
+outbound_auth = 403-auth
+aors = 403-aor
+
+[403-aor](aor-tpl)
+
+[403-auth]
+type = auth
+auth_type = userpass
+username = 403
+password = PASSWORD-HERE
+
+[403-reg](reg-tpl)
+client_uri = sip:403@pbx.example.lan
+contact_user = 403
+outbound_auth = 403-auth
+endpoint = 403
+
+;=============================================================================
+; Line 404 -- PETSCII, V.22 1200 (Commodore 64)
+;=============================================================================
+
+[404](endpoint-tpl)
+context = line-petscii
+from_user = 404
+outbound_auth = 404-auth
+aors = 404-aor
+
+[404-aor](aor-tpl)
+
+[404-auth]
+type = auth
+auth_type = userpass
+username = 404
+password = PASSWORD-HERE
+
+[404-reg](reg-tpl)
+client_uri = sip:404@pbx.example.lan
+contact_user = 404
+outbound_auth = 404-auth
+endpoint = 404

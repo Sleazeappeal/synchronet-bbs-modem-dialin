@@ -1,0 +1,14 @@
+[Unit]
+Description=Nightly backup of the BBS
+
+[Timer]
+# 04:00 local time. Synchronet is stopped for the few seconds the archive takes,
+# so this wants to be when nobody is dialled in.
+OnCalendar=*-*-* 04:00:00
+# If the VM was off at 04:00, run once it is up rather than skipping the day.
+Persistent=true
+# Avoid landing exactly on the hour alongside everything else on the host.
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,47 @@
+# Synchronet BBS for the modem dial-in setup.
+#
+# Adapted from install/systemd/sbbs.service as shipped with Synchronet 3.22a.
+# Differences from the shipped unit:
+#   - SBBSCTRL and ExecStart point at /u00/sbbs instead of /sbbs
+#   - AmbientCapabilities=CAP_NET_BIND_SERVICE removed: no configured port is
+#     below 1024 (terminal ports are loopback-only for the modem relay, SSH is
+#     on 2222, the web server sits behind a reverse proxy), so the capability
+#     would grant privilege the BBS never uses
+#   - sandboxing directives added
+#
+# Deliberately NOT set: MemoryDenyWriteExecute and SystemCallFilter. The
+# bundled SpiderMonkey engine and the DOS door support planned later both
+# conflict with those.
+
+[Unit]
+Description=Synchronet BBS
+Documentation=http://wiki.synchro.net/
+After=syslog.target network-online.target
+
+[Service]
+Type=forking
+NotifyAccess=all
+Environment=SBBSCTRL=/u00/sbbs/ctrl
+User=sbbs
+Group=sbbs
+ExecStart=/u00/sbbs/exec/sbbs d
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=30
+LimitNOFILE=10000
+
+# Sandboxing
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/u00/sbbs
+ProtectHome=true
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,31 @@
+# Log rotation for the source-built Asterisk on the BBS host.
+#
+# Install as /etc/logrotate.d/asterisk, owned by root, not group/world writable.
+#
+# Adapted from contrib/scripts/asterisk.logrotate in the Asterisk source. The
+# differences: paths are under /usr/local because of the --prefix used for the
+# build, "messages" is listed explicitly since it has no .log extension, and the
+# rotated files are created owned by asterisk rather than root -- the daemon
+# does not run as root and could not reopen a root-owned file.
+#
+# Synchronet needs no equivalent here: it logs through syslog.
+
+/usr/local/var/log/asterisk/messages
+/usr/local/var/log/asterisk/queue_log
+/usr/local/var/log/asterisk/*.log
+{
+	weekly
+	# A modem-handshake debugging session can produce far more than a normal
+	# week's output, so cap by size as well as by time.
+	maxsize 50M
+	rotate 12
+	compress
+	delaycompress
+	notifempty
+	missingok
+	create 640 asterisk asterisk
+	sharedscripts
+	postrotate
+		/usr/local/sbin/asterisk -rx 'logger reload' > /dev/null 2> /dev/null || true
+	endscript
+}

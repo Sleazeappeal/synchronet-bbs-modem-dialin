@@ -1,0 +1,41 @@
+# Raw TCP to Synchronet RLogin relay -- one instance per terminal mode.
+#
+# Instance name selects a profile in /etc/default/sbbs-relay-%i, e.g.
+#   systemctl enable --now sbbs-relay@ansi sbbs-relay@petscii
+#
+# The relay holds no state and touches no files, so it runs under a systemd
+# DynamicUser: no account to manage, nothing on disk to own.
+
+[Unit]
+Description=Synchronet softmodem relay (%i)
+After=network.target sbbs.service
+# Without the BBS there is nothing to relay to, but the relay may start first
+# and simply fail connections until Synchronet is up.
+Wants=sbbs.service
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/default/sbbs-relay-%i
+ExecStart=/usr/local/bin/sbbs-relay.py --listen ${LISTEN} --upstream ${UPSTREAM} --term ${TERM}
+Restart=on-failure
+RestartSec=5
+
+# Sandboxing. The relay needs a loopback socket and nothing else.
+DynamicUser=yes
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6
+RestrictSUIDSGID=true
+RestrictRealtime=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallFilter=@system-service
+
+[Install]
+WantedBy=multi-user.target

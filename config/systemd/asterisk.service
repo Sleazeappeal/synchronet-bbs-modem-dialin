@@ -1,0 +1,68 @@
+# Asterisk on the BBS host -- softmodem dial-in.
+#
+# Built from source (22.11.0) into /usr/local, because app_softmodem is an
+# in-tree apps/ module that cannot be added to a packaged Asterisk.
+#
+# This is not a PBX: it registers four extensions to the PBX and
+# answers each call with a software modem. No trunk, no users, no AMI.
+#
+# Deliberately NOT set: MemoryDenyWriteExecute, which Asterisk's module loading
+# does not tolerate.
+#
+# CPUSchedulingPolicy=rr below is deliberate: app_softmodem demodulates audio
+# in fixed-size frames, and for a caller without V.42 error correction a
+# single late frame (this process preempted under plain SCHED_OTHER,
+# no priority protection at all) desyncs the modem's timing recovery for the
+# rest of the call -- the "starts clean, degrades to garbage, never recovers"
+# failure mode.
+#
+# Asterisk's own highpriority/-p option cannot help here: main/asterisk.c only
+# calls ast_set_priority() when the process detects it is running as root
+# (the traditional start-as-root-then-drop-privileges pattern), and this unit
+# runs as the unprivileged "asterisk" user from the start, so that code path
+# never fires no matter what asterisk.conf says. Setting the scheduling policy
+# here instead -- before Asterisk's own code ever runs -- sidesteps that gate
+# entirely, and needs no capability grant: Asterisk's own thread-creation
+# wrapper (ast_pthread_create_stack) explicitly requests PTHREAD_INHERIT_SCHED
+# for every thread it spawns, specifically so a realtime policy on the main
+# thread propagates to every channel/worker thread automatically. That also
+# means RestrictRealtime can stay at its secure default: it only blocks the
+# process from requesting realtime scheduling for itself, not a policy
+# already assigned before its code starts running.
+
+[Unit]
+Description=Asterisk softmodem dial-in
+Documentation=https://docs.asterisk.org/
+After=network-online.target
+Wants=network-online.target
+# The relays and the BBS are the reason this exists, but Asterisk can run
+# without them -- a call would simply fail to reach the BBS.
+After=sbbs.service
+
+[Service]
+Type=simple
+User=asterisk
+Group=asterisk
+ExecStart=/usr/local/sbin/asterisk -f -C /usr/local/etc/asterisk/asterisk.conf
+ExecReload=/usr/local/sbin/asterisk -rx "core reload"
+Restart=on-failure
+RestartSec=10
+LimitNOFILE=4096
+CPUSchedulingPolicy=rr
+CPUSchedulingPriority=10
+
+# Sandboxing
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/usr/local/var/lib/asterisk /usr/local/var/log/asterisk /usr/local/var/spool/asterisk /usr/local/var/run/asterisk
+ProtectHome=true
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target

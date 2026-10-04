@@ -1,0 +1,14 @@
+[Unit]
+Description=Application-level backup of the BBS
+Documentation=file:///usr/local/sbin/bbs-backup.sh
+# The script stops and starts sbbs itself; declaring an ordering here as well
+# would only confuse the picture.
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/bbs-backup.sh
+# Runs as root: it reads Synchronet's 0700 data directory and Asterisk's
+# 0640 config, and controls the sbbs unit.
+User=root
+Nice=10
+IOSchedulingClass=idle
