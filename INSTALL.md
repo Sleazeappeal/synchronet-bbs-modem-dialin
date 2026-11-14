@@ -75,6 +75,61 @@ Test the RLogin ports directly: `tools/bbs-rlogin-probe.py 2300` should show
 the ANSI login screen, `2340` the PETSCII one, both without any 0xFF/IAC
 bytes.
 
+### 40-column screens (optional)
+
+Several stock Synchronet screens are wider than 40 columns and wrap on a C64.
+`synchronet/40col/` holds 40-column versions of them, in the same paths as
+on the BBS host. 80-column callers are not affected: Synchronet picks
+`<name>.40col.<ext>` only for 40-column terminals (and searches
+`mods/text/menu/` before `text/menu/`), and `mods/logon.js` changes text
+strings only when the terminal has fewer than 80 columns. They were made
+with [VolksTerm](https://github.com/Sleazeappeal/VolksTerm), a C64 OS
+terminal, and tested on a Commodore 128 with a Volks 6420 in both C128
+mode and C64 mode, with VolksTerm (on C64 OS 1.08, CMD HD4000), TouchTerm
+3.9 (Volks 6480 version) and CBterm V6.6.
+
+How they were tested: first in VICE 3.10 at 100% speed with VolksTerm's
+[`volksterm.ini`](https://github.com/Sleazeappeal/VolksTerm/blob/main/tools/vice/volksterm.ini),
+whose user-port RS-232 goes as raw TCP to `127.0.0.1:2341`, forwarded to
+the PETSCII relay of a test BBS with
+`ssh -N -L 127.0.0.1:2341:127.0.0.1:2341 <bbs-host>`. Every screen in the
+table below was checked by screenshot. Then on the real machine, dialing
+in through the modem. See "Test methodology" in the VolksTerm README.
+
+| File | Screen |
+|---|---|
+| `text/answer.40col.msg` | Logon screen |
+| `mods/text/menu/main.40col.msg` | Main menu (classic shell) |
+| `mods/text/menu/logoff.40col.msg` | Log off |
+| `mods/text/menu/msgscan.40col.asc` | `?` while reading messages |
+| `mods/text/menu/userinfo.40col.msg` | Info → Your statistics |
+| `mods/text/menu/textsrch.40col.msg` | `?` at a search prompt |
+| `mods/text/menu/batflag.40col.msg` | File listing, batch flagging help |
+| `mods/text/menu/tempxfer.40col.asc` | File section → temp directory |
+| `mods/text/menu/privchat.40col.asc` | Private chat |
+| `mods/text/system.40col.msg` | Info → I → "View system information file" (`../system`) |
+| `mods/logonlist.js` | Last callers: one line per caller |
+| `mods/logon.js` | New-message scan line, System information (Info → I) |
+
+Each extension matches the stock file (`.asc` vs `.msg`): Synchronet tries
+all `.asc` names before any `.msg`, so `msgscan.40col.msg` would lose to
+the stock `msgscan.asc`. Synchronet's version and copyright banner (Info → V,
+and under System information) is built into Synchronet and still wraps.
+Sysop-only screens are left as they are.
+
+Install on the BBS host, from the repository checkout:
+
+```sh
+sudo bash synchronet/40col/install.sh [--force] [/u00/sbbs]
+```
+
+It reads the `mods=` directory from `ctrl/main.ini` and checks that
+`exec/logonlist.js` is the version the `mods/` copy was patched from. It
+stops before writing anything if a target exists with other content;
+`--force` backs such files up as `<file>.bak-<timestamp>` and replaces
+them. Running it again only reports `same`. No restart is needed. The
+license notice is in `synchronet/40col/NOTICE.txt`.
+
 ## 3. The relay
 
 `app_softmodem` passes raw bytes; Synchronet has no raw listener, and telnet

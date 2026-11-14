@@ -27,6 +27,10 @@ with **Claude Opus 5.5** (Anthropic), working in Claude Code, together with the
 repository owner, who built and runs the BBS and did all the testing with the
 real modems and retro computers.
 
+## License
+
+GNU General Public License version 2 (`LICENSE`).
+
 ## What this is
 
 Retro computers dial a BBS with their own modems, as in the 1990s, but the
@@ -59,7 +63,11 @@ Retro computers dial a BBS with their own modems, as in the 1990s, but the
 
 Tested with Rockwell, USRobotics, Smart Link and Conexant modems behind
 Grandstream HT802 and Cisco SPA112 ATAs: logins, ANSI art, ZMODEM/YMODEM
-transfers both ways.
+transfers both ways. The PETSCII line and its 40-column screens were tested
+from a Commodore 128 with a Volks 6420 user-port modem, in both C128 mode and
+C64 mode, with [VolksTerm](https://github.com/Sleazeappeal/VolksTerm) (on
+C64 OS 1.08, CMD HD4000), TouchTerm 3.9 (Volks 6480 version) and CBterm
+V6.6.
 
 ## Contents
 
@@ -74,6 +82,7 @@ transfers both ways.
 | `config/rsyslog/60-remote.conf` | optional log forwarding | `/etc/rsyslog.d/` |
 | `scripts/sbbscfg.py`, `set_identity.py`, `enable_web.py` | apply the identity and port map to Synchronet's ini files | run once |
 | `scripts/bbs-backup.sh` | nightly application-level backup | `/usr/local/sbin/bbs-backup.sh` |
+| `synchronet/40col/` | optional 40-column (C64/PETSCII) versions of the screens that wrap, `install.sh` | Synchronet `text/` and `mods/` |
 | `tools/` | probes for the RLogin ports and the relay | — |
 
 ## Requirements
@@ -87,7 +96,3 @@ transfers both ways.
 - Synchronet 3.22 built from source.
 
 See [INSTALL.md](INSTALL.md).
-
-## License
-
-GNU General Public License version 2 (`LICENSE`).

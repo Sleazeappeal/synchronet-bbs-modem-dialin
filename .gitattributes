@@ -1,2 +1,4 @@
 # Scripts and config files must keep LF line endings on every platform
 * text=auto eol=lf
+# The 40-column screens keep their exact bytes (CRLF, PETSCII control codes)
+synchronet/40col/** -text

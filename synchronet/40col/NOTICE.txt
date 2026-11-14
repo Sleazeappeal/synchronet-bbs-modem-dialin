@@ -1,0 +1,19 @@
+Synchronet 40-column (C64/PETSCII) package
+==========================================
+
+These files adapt Synchronet BBS (https://www.synchro.net),
+Copyright Rob Swindell, for 40-column terminals. Synchronet is
+free software under the GNU General Public License, version 2 or
+(at your option) any later version, and so are these files: see
+LICENSE in the repository root and
+https://www.synchro.net/copyright.html.
+
+- mods/logonlist.js: modified copy of Synchronet exec/logonlist.js
+  (one line per caller on narrow terminals)
+- text/answer.40col.msg, mods/text/system.40col.msg and
+  mods/text/menu/*.40col.*: 40-column versions of Synchronet's
+  stock screens
+- mods/logon.js, install.sh: new
+
+Changes and new files: Copyright (c) 2026 Sleazy, same license.
+There is NO WARRANTY, see LICENSE.
