@@ -171,6 +171,11 @@ README has the details.
    `./configure --prefix=/usr/local`, and build with the **patched spandsp
    headers** first on the include path (see app_softmodem_v42):
    `make ASTCFLAGS="-I/path/to/spandsp-0.0.6+dfsg/src"`, then `make install`.
+   On a VM, or if the binaries may run on another CPU, first run
+   `menuselect/menuselect --disable BUILD_NATIVE menuselect.makeopts`: the
+   default `-march=native` build crashes with `SIGILL` (`status=4/ILL`) on a
+   CPU without the build machine's instruction set extensions, for example
+   after the VM's CPU model changes.
 4. **User and configuration.** Create a system user `asterisk`, copy
    `config/asterisk/*` to `/usr/local/etc/asterisk/`, and make
    `pjsip.conf` from `pjsip.conf.example`: replace `pbx.example.lan` and the
